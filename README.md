@@ -1,127 +1,159 @@
 NBA Player Longevity Prediction
 
-Feature Engineering Project — NBA Players Dataset
+Naive Bayes Classification Project — Gaussian Naive Bayes Model
 
 Project Overview:
-This project analyses an NBA player performance dataset (1,340 players, 21 features)
-using Python and pandas to engineer a clean, model-ready feature set for predicting
-whether a player will remain active in the NBA for at least 5 years ( target_5yrs ).
-The pipeline covers target variable definition, removal of non-predictive columns,
-correlation analysis to resolve multicollinearity, creation of meaningful composite metrics,
-missing value handling, and full documentation of every feature engineering decision.
+This project analyses an engineered NBA player performance dataset (1,340 players, 10
+features) using Python and Scikit-learn to build a Gaussian Naive Bayes classification
+model that predicts whether a player will remain active in the NBA for at least 5 years
+( target_5yrs ).
+The analysis covers target variable confirmation, feature preprocessing for Gaussian
+compatibility, train/test splitting, model training, Confusion Matrix evaluation, Precision and
+Recall interpretation aligned with scouting priorities, a critical assessment of the Naive
+Bayes independence assumption in a sports context, and actionable recommendations for
+integrating the model into scouting workflows
 
 Dataset:
 Property Value
-Source nba-players.csv
+Source extracted_nba_players_data.csv
 Rows 1,340 players
-Original Features 21 (after dropping index/name)
+Features 10 continuous numeric metrics
 Target Variable target_5yrs (1 = played 5+ years, 0 = did not)
 Class Balance 62.0% career ≥5 yrs, 38.0% career <5 yrs
 Missing Values None
+The dataset is the engineered output from the NBA Feature Engineering pipeline — it
+contains only continuous numeric features compatible with Gaussian Naive Bayes
 
 Core Project Goals:
-1. Define the target variable target_5yrs as the dependent variable for modelling
-2. Drop non-predictive columns ( name , index) that add noise or risk data leakage
-3. Perform correlation analysis to identify and resolve multicollinearity among predictors
-4. Engineer at least one composite feature that captures player efficiency or impact
-5. Handle missing values appropriately to ensure ML-readiness without introducing bias
-6. Document all feature engineering decisions with clear Markdown rationale
-7. 
+1. Load the engineered dataset and confirm target_5yrs as the classification target
+2. Preprocess features to ensure compatibility with Gaussian Naive Bayes (continuous
+metrics)
+3. Split data into training and testing sets for unbiased model evaluation
+4. Implement a Gaussian Naive Bayes classifier using Scikit-learn
+5. Generate a Confusion Matrix to visualise true/false positives and negatives
+6. Calculate Precision (minimise false positives: “busts”) and Recall (minimise false
+negatives: missed talent)
+7. Explain the Naive Bayes independence assumption and assess its realism for
+basketball statistics
+8. Summarise model reliability and limitations for a scouting department audience
+9. Identify the most influential features driving longevity predictions
+10. Provide actionable recommendations for integrating the model into scouting
+workflows
+
 Tools & Libraries
-Tool and Purpose
+Tool Purpose
 Python 3 Core language
-pandas Data loading, cleaning, transformation
-NumPy Numerical operations, correlation matrix
+pandas Data loading and manipulation
+NumPy Numerical operations
+scikit-learn GaussianNB model, train/test split, evaluation metrics
 Matplotlib Data visualisation
 Seaborn Correlation heatmap
 Jupyter Notebook Interactive analysis environment
 
-Feature Engineering Workflow:
-1. Load & Inspect Dataset
-Loaded nba-players.csv and confirmed 1,340 rows, 22 columns, zero null values
-Identified target_5yrs as the binary classification target
-2. Drop Non-Predictive Columns
-Removed:
-Unnamed: 0 — row index with no predictive value
-name — player identifier; inclusion would cause data leakage and model overfitting
-3. Correlation Analysis & Multicollinearity Reduction
-A correlation matrix was computed on all numeric features. Pairs with correlation > 0.85
-were flagged as redundant. Key findings:
+Modelling Approach
+Algorithm: Gaussian Naive Bayes
+Why Gaussian? All 10 features are continuous numeric metrics — Gaussian NB models
+each feature as a normal distribution within each class
+Why Naive Bayes? Computationally lightweight, probabilistic, interpretable, and
+effective even on smaller datasets
+No scaling required — Unlike Logistic Regression, GaussianNB models feature
+distributions independently, so StandardScaler is not needed
+Train / Test Split
+80% training (1,072 players) / 20% testing (268 players)
+random_state=42 for reproducibility
 
-Feature Pair and Correlation
-fgm ↔ pts 0.991
-fga ↔ fgm 0.980
-fga ↔ pts 0.980
-3pa ↔ 3p_made 0.983
-ftm ↔ fta 0.981
-dreb ↔ reb 0.978
-oreb ↔ reb 0.933
-min ↔ pts 0.912
+Results:
+Performance Metrics
+Metric Score
+Accuracy 66.42%
+Precision 86.92%
+Recall 55.03%
 
-Decision: Dropped redundant volume stats ( fga , fgm , fta , ftm , 3pa , oreb , dreb ) and
-retained percentage-based or summary features ( fg , ft , 3p , pts , reb ) to eliminate
-multicollinearity while preserving information.
+Confusion Matrix:
+Predicted: Did Not Last Predicted: Lasted 5+ Yrs
+Actually Did Not Last 85 (TN) 14 (FP) — “Busts”
+Actually Lasted 5+ Yrs 76 (FN) — Missed talent 93 (TP)
 
-5. Composite Feature Engineering
-Three new features were created to capture player efficiency in ways raw statistics cannot:
-New Feature Formula Rationale
-pts_per_min pts / min Measures scoring efficiency — removes
-volume bias from high-minute players
-efficiency_rating
-pts + reb + ast +
-stl + blk − tov
-Composite all-round impact metric widely
-used in basketball analytics
-ast_tov_ratio ast / tov Decision-making quality — high assists
-with low turnovers signals durability
-
-7. Missing Value Handling:
-No null values existed in the raw dataset
-After feature creation, rows where min = 0 (zero minutes played) were handled with
-np.nan replacement to avoid division-by-zero in pts_per_min and ast_tov_ratio ,
-followed by median imputation to prevent bias.
+Business Interpretation (Scouting Context):
+Precision (86.92%): When the model predicts a player will last 5+ years, it is correct
+~87% of the time. This directly minimises wasted investment on busts — teams can
+act on the model’s positive predictions with high confidence.
+Recall (55.03%): The model only identifies ~55% of all truly long-term players, missing
+76 genuine prospects. The model is conservative — it avoids false alarms but at the cost
+of missing real talent.
+For scouts: Use the model as a high-precision first-pass filter. Players flagged as longterm prospects should be fast-tracked. Players flagged negatively should still undergo
+human evaluation — the model misses nearly half of real long-term players.
 
 Key Findings:
-Top Predictors of 5-Year Career Longevity (Correlation with target_5yrs )
-Rank and Feature and Correlation
-1 gp (games played) +0.397
-2 efficiency_rating (engineered) +0.339
-3 min (minutes per game) +0.318
-4 fgm +0.318
-5 pts +0.316
-6 reb +0.299
-7 ftm +0.297
+Most Influential Features (Correlation with target_5yrs )
+Rank Feature Correlation
+1 total_points 0.3585
+2 reb (rebounds) 0.2994
+3 tov (turnovers) 0.2723
+4 stl (steals) 0.2298
+5 fg (field goal %) 0.2271
+6 blk (blocks) 0.2101
+7 efficiency 0.1945
+8 ast (assists) 0.1754
+9 ft (free throw %) 0.1067
+10 3p (3-point %) ~0.000
 
-Notable: The engineered efficiency_rating feature ranks 2nd overall among all
-predictors — demonstrating that composite metrics can outperform individual raw stats for
-longevity prediction.
+Weakest predictor: 3p (three-point percentage) shows near-zero correlation with
+longevity — shooting range alone does not predict career length.
 
-Weakest Predictors (candidates for removal)
-3p (three-point percentage): correlation ≈ 0.000
-3pa (three-point attempts): correlation ≈ +0.018
-ast_tov_ratio : correlation ≈ −0.013
-These features contribute minimal signal and were flagged for removal in the final modelready dataset.
+Independence Assumption — Critical Assessment
+Gaussian Naive Bayes assumes all features are conditionally independent given the class.
+This assumption is violated in basketball data:
+Feature Pair Why correlated
+total_points ↔
+reb , tov
+High-usage players score, rebound, and turn the ball over more
+efficiency ↔
+most features
+Engineered from pts + reb + ast + stl + blk − tov — shares
+components with other columns
+ast ↔ tov Both are ball-handling metrics that co-occur
+Impact: The model double-counts correlated information, making it overconfident in its
+probability estimates. However, classification accuracy is less sensitive to this than
+probability calibration — the model’s 87% Precision confirms it still separates classes well
+despite the violation.
+Recommendation: Trust classification outputs; do not interpret raw probability scores as
+precisely calibrated values.
 
-Final Model-Ready Dataset
-After the full pipeline the clean dataset retains:
-Dropped: Unnamed: 0 , name , fga , fgm , fta , ftm , 3pa , oreb , dreb
-Retained: gp , min , pts , fg , 3p_made , 3p , ft , reb , ast , stl , blk , tov
-Added: pts_per_min , efficiency_rating , ast_tov_ratio
-Target: target_5yrs.
+Scouting Integration Recommendations
+Model Output Trust Level Recommended Action
+Predicts: Will last 5+ years High (87%
+correct)
+Prioritise for contract / development
+investment
+Predicts: Will NOT last 5+
+years
+Moderate (55%
+recall)
+Do not discard — assign for human
+scout review
+Borderline probability
+(40–60%)
+Low Mandatory human evaluation before any
+decision.
 
 Limitations & Next Steps
-The dataset does not include positional data — position (guard vs centre) likely
-influences longevity and should be encoded in future iterations
-efficiency_rating is highly correlated with pts (0.968) and min (0.945); for linear
-models, one of the two should be dropped to avoid introducing new multicollinearity
-With a larger dataset, recursive feature elimination (RFE) with cross-validation would
-provide a more rigorous feature selection method
-Next step: feed the cleaned feature set into a classification model (Logistic Regression,
-Random Forest) to validate predictive power.
+Low Recall (55%) limits the model’s usefulness for talent discovery — nearly half of
+genuine long-term players are missed
+Independence assumption violated — correlated features reduce the reliability of
+probability outputs
+No contextual features — position, team quality, age at entry, and injury history would
+improve predictions
+Threshold tuning — lowering the decision threshold from 0.5 to ~0.35 would improve
+Recall at some cost to Precision
+Next model comparison: Random Forest or Gradient Boosting are expected to
+outperform Naive Bayes on this correlated dataset
 
-Repository Structure
-- nba_feature_engineering.ipynb # Main analysis notebook (all cells executed)
-- nba-players.csv # Dataset
+Repository Structure:
+- naive_bayes_nba.ipynb # Main analysis notebook (all cells executed)
+-  extracted_nba_players_data.csv # Engineered dataset
 - README.md # This file
-  
-Project submitted by Elizabeth Danladi Sabatu as part of the Feature Engineering Mini Project — DH Foundation AI/ML COHORT 4
+
+  Project submitted as part of the Naive Bayes Mini Project — DH Foundation Data Science
+Cohort
+
